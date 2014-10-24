@@ -63,17 +63,17 @@ io.sockets.on("connection", function (socket) {
         });
         sink.on("err", function (type, data) {
             data.name = type;
-            data.message = l10n.message("en", type, data.key, data.extra);
+            data.message = l10n.message(validator.config.lang, type, data.key, data.extra);
             socket.emit("error", data);
         });
         sink.on("warning", function (type, data) {
             data.name = type;
-            data.message = l10n.message("en", type, data.key, data.extra);
+            data.message = l10n.message(validator.config.lang, type, data.key, data.extra);
             socket.emit("warning", data);
         });
         sink.on('info', function (type, data) {
             data.name = type;
-            data.message = l10n.message('en', type, data.key, data.extra);
+            data.message = l10n.message(validator.config.lang, type, data.key, data.extra);
             socket.emit('info', data);
         });
         sink.on("done", function (name) {
@@ -107,6 +107,6 @@ io.sockets.on("connection", function (socket) {
                 }
             }
         });
-        
+
     });
 });
