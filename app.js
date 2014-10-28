@@ -11,7 +11,23 @@ var express = require("express")
 ,   events = require("events")
 ,   urlSafety = require("safe-url-input-checker")
 ,   version = require("./package.json").version
+,   expressRest = require("express-rest")
+,   rest = expressRest(app) /* , {
+      serializers: {
+        'text/html': {
+          deserialize: function(req, rest, next) {
+            req.body = object;
+            next();
+          }
+        }
+        , serialize: function(req, rest, next) {
+            rest.send(buffer);
+            next();
+          }
+        }
+    }) */
 ,   profiles = {}
+,   pending = {}
 ;
 ("FPWD FPLC WD LC CR PR PER REC RSCND " +
 "CG-NOTE FPIG-NOTE IG-NOTE FPWG-NOTE WG-NOTE " +
@@ -26,6 +42,54 @@ app.use(express.logger());
 app.use(express.compress());
 app.use(express.json());
 app.use(express.static("public"));
+
+rest.get('/api/version', function(req, rest) {
+  rest.ok('Specberus version ' + version);
+});
+
+rest.get('/api/request/:url', function(req, rest) {
+  var url = req.params.url;
+  if (pending[url]) {
+    rest.ok('Spec at ' + url + ' is pending validation.');
+  }
+  else {
+    pending[url] = true;
+    processSpec(url);
+    // rest.created('/ticket/' + url);
+    rest.ok('Spec at ' + url + ' added to the queue.');
+  }
+});
+
+function processSpec(url) {
+  setInterval(function() {
+        new Specberus().validate({
+          url:                url
+        , profile:            require('./lib/profiles/REC')
+        , events:             new Sink()
+/*        , skipValidation:     data.skipValidation
+        , noRecTrack:         data.noRecTrack
+        , informativeOnly:    data.informativeOnly
+        , processDocument:    data.processDocument */
+        });
+        delete(pending[url]);
+    }
+  , 10000 * Math.random());
+}
+
+/* rest.put('/api/food/:id', function(req, rest) {
+  records[req.params.id] = req.body;
+  return rest.accepted('/api/food/' + encodeURI(req.params.id));
+});
+
+rest.post('/api/food', function(req, rest) {
+  records.push(req.body);
+  rest.created('/api/food/' + (records.length - 1));
+});
+
+rest.delete('/api/food/:id', function(req, rest) {
+  delete records[req.params.id];
+  rest.gone();
+}) */
 
 // listen up
 server.listen(process.env.PORT || 80);
